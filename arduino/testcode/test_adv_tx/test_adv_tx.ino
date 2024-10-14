@@ -32,9 +32,11 @@ void loop() {
   if (Serial.available() > 0) {
     // Read and update advertising data from Serial input
     updateServiceData();
-    // Update the advertising data
+    // Stop advertising, update the advertising data, and restart advertising
+    BLE.stopAdvertise();
     updateAdvertisingData();
-    Serial.println("Updated advertising data.");
+    BLE.advertise();
+    Serial.println("Updated advertising data and restarted advertising.");
   }
 }
 
