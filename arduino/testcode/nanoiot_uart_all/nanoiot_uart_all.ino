@@ -7,6 +7,8 @@
 DHT dht(DHTPIN, DHTTYPE);
 Adafruit_CCS811 ccs;
 
+uint8_t boardNum = 1;  // 보드 번호 설정
+
 void setup() {
   Serial1.begin(9600); // UART 통신을 위한 시리얼 포트 초기화, 9600 bps
   dht.begin();
@@ -27,12 +29,15 @@ void loop() {
   int TVOC;     // 추후 사용을 위한 변수 선언
   int soil;     // 토양 센서 값
   soil = analogRead(A0); // 토양 센서를 아날로그 핀 A0에 연결
+  soil = map(soil, 0, 1023, 0, 100);
   delay(100);
 
   float Humi = dht.readHumidity();      // 습도 값 읽기
   float Temp = dht.readTemperature();   // 온도 값 읽기
 
   // 데이터 전송
+  Serial1.print(boardNum);  // 보드 번호 전송
+  Serial1.print(",");
   Serial1.print(soil);
   Serial1.print(",");
   Serial1.print(Humi);
@@ -40,6 +45,9 @@ void loop() {
   Serial1.print(Temp);
   Serial1.print(",");
   Serial1.println(co2);  // 현재 CO2 값은 0으로 전송
+
+  Serial.print(boardNum);  // 보드 번호 출력
+  Serial.print(",");
   Serial.print(soil);
   Serial.print(",");
   Serial.print(Humi);

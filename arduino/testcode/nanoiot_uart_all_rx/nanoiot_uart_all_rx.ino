@@ -49,13 +49,13 @@ void parseData(String data) {
 }
 
 void control_solenoids(int soil_value) {
-    if (soil_value <= 400) { // soil 값이 400 이하이면
+    if (soil_value < 40) { // soil 값이 40 이하이면
         if (solenoid_state[0] == 0) {  // 1번 벨브만 제어
             solenoid_state[0] = 1;
             digitalWrite(solenoid_pin[0], HIGH);  // 1번 벨브 열기
             Serial.println("VALVE 1 ON");
         }
-    } else if (soil_value > 400) { // soil 값이 400 이상이면
+    } else if (soil_value >= 45) { // soil 값이 45 이상이면
         if (solenoid_state[0] == 1) {  // 1번 벨브만 제어
             solenoid_state[0] = 0;
             digitalWrite(solenoid_pin[0], LOW);  // 1번 벨브 닫기

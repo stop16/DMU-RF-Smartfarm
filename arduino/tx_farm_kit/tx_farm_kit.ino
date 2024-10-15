@@ -2,16 +2,19 @@
 #include "Adafruit_CCS811.h"
 #include "DHT.h"
 
+// Macro
+#define KIT_NUM 1 // kit별로 다르게 넣어야 함
+#define DHTPIN 2
+#define DHTTYPE DHT11
+
+// BLE Setup
 BLEService myService("fff0");
 BLEIntCharacteristic myCharacteristic("fff1", BLERead | BLEBroadcast);
-
-// Advertising parameters should have a global scope. Do NOT define them in 'setup' or in 'loop'
 uint8_t manufactData[4] = {0x01, 0x02, 0x03, 0x04};
 uint8_t serviceData[7] = {0x00};  // soil, humi(int), humi(float), temp(int), temp(float), co2(big), co2(small)
-
-// Macro
-#define DHTPIN 2        
-#define DHTTYPE DHT22   
+BLEAdvertisingData scanData;
+scanData.setLocalName("Farm_kit_01");
+BLE.setScanResponseData(scanData);
 
 // Sensor setup
 DHT dht(DHTPIN, DHTTYPE);
@@ -19,20 +22,25 @@ Adafruit_CCS811 ccs;
 
 // Variables setup
 typedef struct {
+    uint8_t boardNum;
     uint8_t soil;
     float humi;
     float temp;
     uint16_t co2;
-} sensor_data;
+} kit_data;
 
 bool ccsInitialized = false; // CCS811 센서 초기화 여부
 bool dhtInitialized = false; // DHT22 센서 초기화 여부
-sensor_data kitData;
+kit_data kitData;
+
+kitData.boardNum = KIT_NUM;
 
 void setup()
 {
     Serial.begin(9600);
+    Serial1.begin(9600);
     while(!Serial);
+    while(!Serial1);
 
     if(!BLE.begin()){
         Serial.println("failed to initialize BLE!");
@@ -83,18 +91,18 @@ void loop()
     }
 }
 
-uint8_t readSoilData(void){
+uint8_t readSoilData(void) {
     return map(analogRead(A0), 0, 1023, 0, 100);
 }
 
-void readDHTData(float *arr){
+void readDHTData(float *arr) {
     float humi = dht.readHumidity();
     float temp = dht.readTemperature();
     arr[0] = humi;
     arr[1] = temp;
 }
 
-uint16_t readCCSData(void){
+uint16_t readCCSData(void) {
     if(ccs.available()){
         if(!ccs.readData()){
             return ccs.geteCO2();
@@ -104,22 +112,13 @@ uint16_t readCCSData(void){
     else return 0;
 }
 
-void sendData(sensor_data data){
-    Serial.print(data.soil);
-    Serial.print(",");
-    Serial.print(data.humi);
-    Serial.print(",");
-    Serial.print(data.temp);
-    Serial.print(",");
-    Serial.print(data.co2);
-    Serial.println();
+void sendData(sensor_data data) {
+    String data_to_send = data.boardNum + "," + data.soil + "," + data.humi + "," + data.temp + "," + data.co2;
+    Serial.println(data_to_send);
+    Serial1.println(data_to_send);
 }
 
-void updateAdvertisingData(){
-    BLEAdvertisingData scanData;
-    scanData.setLocalName("Farm_kit_01");
-    BLE.setScanResponseData(scanData);
-
+void updateAdvertisingData() {
     // Build advertising data packet
     BLEAdvertisingData advData;
     advData.setManufacturerData(0x004C, manufactData, sizeof(manufactData));
@@ -128,7 +127,7 @@ void updateAdvertisingData(){
     BLE.setAdvertisingData(advData);
 }
 
-void updateServiceData(){
+void updateServiceData() {
     serviceData[0] = kitData.soil;
     serviceData[1] = (uint8_t) kitData.humi;
     serviceData[2] = (uint8_t) ((kitData.humi - (int) kitData.humi)*100);
