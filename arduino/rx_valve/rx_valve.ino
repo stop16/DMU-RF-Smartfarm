@@ -55,12 +55,55 @@ void loop() {
     byte advData[advDataLen];
     peripheral.advertisementData(advData, advDataLen);
     parseServiceData(advData, advDataLen);
+    
     BLE.scan(); // 다시 스캔
   }
 
-  controlSolenoids();
-  sendData(kitData);
-
+  sendData();
+  // controlSolenoids();
+  
+  if (Serial.available() > 0) {
+        char command = Serial.read(); // Read serial input
+        if (command == '1') {
+            if(solenoid_state[0]){
+            digitalWrite(solenoid_pin[0], LOW);
+            solenoid_state[0] = 0;
+          }
+          else{
+            digitalWrite(solenoid_pin[0], HIGH);
+            solenoid_state[0] = 1;
+          }
+        } else if (command == '2') {
+            if(solenoid_state[1]){
+            digitalWrite(solenoid_pin[1], LOW);
+            solenoid_state[1] = 0;
+          }
+          else{
+            digitalWrite(solenoid_pin[1], HIGH);
+            solenoid_state[1] = 1;
+          }
+        }
+        else if(command == '3'){
+          if(solenoid_state[2]){
+            digitalWrite(solenoid_pin[2], LOW);
+            solenoid_state[2] = 0;
+          }
+          else{
+            digitalWrite(solenoid_pin[2], HIGH);
+            solenoid_state[2] = 1;
+          }
+        }
+        else if(command == '4'){
+          if(solenoid_state[3]){
+            digitalWrite(solenoid_pin[3], LOW);
+            solenoid_state[3] = 0;
+          }
+          else{
+            digitalWrite(solenoid_pin[3], HIGH);
+            solenoid_state[3] = 1;
+          }
+        }
+    }
 }
 
 void parseUartData(String data){
@@ -121,21 +164,23 @@ void parseServiceData(byte* advData, int advDataLen){
     data_updated[incoming_data[0]] = true;
 }
 
-void sendData(kit_data data) {
-    String data_to_send = (String) data.boardNum + "," + (String) data.soil + "," + (String) data.humi + "," + (String) data.temp + "," + (String) data.co2;
+void sendData() {
+  for(uint8_t i = 0; i < 4; i++){
+    String data_to_send = (String) kitData[i].boardNum + "," + (String) kitData[i].soil + "," + (String) kitData[i].humi + "," + (String) kitData[i].temp + "," + (String) kitData[i].co2;
     Serial.println(data_to_send);
     Serial1.println(data_to_send);
+  }
 }
 
 void controlSolenoids(){
     for(uint8_t i = 0; i < 4; i++) {
-        if(kitData[i].soil < 40 && data_updated[i] == true) {
+        if(kitData[i].soil < 20 && data_updated[i] == true) {
             if(solenoid_state[i] == 0) {
                 solenoid_state[i] = 1;
                 digitalWrite(solenoid_pin[i], HIGH);
             }
         }
-        else if(kitData[i].soil >= 45 && data_updated[i] == true) {
+        else if(kitData[i].soil >= 20 && data_updated[i] == true) {
             if(solenoid_state[i] == 1) {
                 solenoid_state[i] = 0;
                 digitalWrite(solenoid_pin[i], LOW);
