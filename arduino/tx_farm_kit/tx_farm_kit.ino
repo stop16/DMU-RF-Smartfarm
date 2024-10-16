@@ -3,7 +3,8 @@
 #include "DHT.h"
 
 // Macro
-#define KIT_NUM 1 // kit별로 다르게 넣어야 함
+// #define EN_CCS // CCS 사용시 주석 해제
+#define KIT_NUM 2 // kit별로 다르게 넣어야 함
 #define DHTPIN 2
 #define DHTTYPE DHT11
 
@@ -14,8 +15,10 @@ uint8_t manufactData[4] = {0x01, 0x02, 0x03, 0x04};
 uint8_t serviceData[8] = {0x00};  // soil, humi(int), humi(float), temp(int), temp(float), co2(big), co2(small)
 
 // Sensor setup
-DHT dht(DHTPIN, DHTTYPE);
-Adafruit_CCS811 ccs;
+DHT dht(DHTPIN, DHTTYPE); 
+#ifdef EN_CCS
+  Adafruit_CCS811 ccs;
+#endif
 
 // Variables setup
 typedef struct{
@@ -35,7 +38,7 @@ void setup()
     kitData.boardNum = KIT_NUM;
     Serial.begin(9600);
     Serial1.begin(9600);
-    while(!Serial);
+    // while(!Serial);
     while(!Serial1);
 
     if(!BLE.begin()){
@@ -49,6 +52,7 @@ void setup()
     dht.begin();
     dhtInitialized = true;
 
+#ifdef EN_CCS
     while (!ccsInitialized) {
     if (ccs.begin()) {
         ccsInitialized = true;
@@ -58,6 +62,9 @@ void setup()
         delay(1000);  // 1초 대기 후 재시도
     }
     }
+#else EN_CCS
+  ccsInitialized = true; 
+#endif
 
     updateAdvertisingData();
     BLE.advertise();
@@ -76,7 +83,9 @@ void loop()
     kitData.humi = arr[0];
     kitData.temp = arr[1];
 
+#ifdef EN_CCS
     kitData.co2 = readCCSData();
+#endif
 
     // 데이터 전송
     if(ccsInitialized && dhtInitialized) {
@@ -99,6 +108,7 @@ void readDHTData(float *arr) {
     arr[1] = temp;
 }
 
+#ifdef EN_CCS
 uint16_t readCCSData(void) {
     if(ccs.available()){
         if(!ccs.readData()){
@@ -108,6 +118,7 @@ uint16_t readCCSData(void) {
     }
     else return 0;
 }
+#endif
 
 void sendData(kit_data data) {
     String data_to_send = (String) data.boardNum + "," + (String) data.soil + "," + (String) data.humi + "," + (String) data.temp + "," + (String) data.co2;
@@ -117,7 +128,7 @@ void sendData(kit_data data) {
 
 void updateAdvertisingData() {
     BLEAdvertisingData scanData;
-    scanData.setLocalName("Farm_kit_01");
+    scanData.setLocalName("Farm_kit_2");
     BLE.setScanResponseData(scanData);
 
     // Build advertising data packet
