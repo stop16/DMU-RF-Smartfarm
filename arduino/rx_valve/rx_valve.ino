@@ -10,7 +10,7 @@ typedef struct{
 }kit_data;
 kit_data kitData[4];
 
-uint8_t solenoid_pin[4] = {2,3,4,5}; // Valve pin number
+uint8_t solenoid_pin[5] = {0,9,10,11,12}; // Valve pin number
 uint8_t solenoid_state[4] = {0};
 
 String uart_string = "";
@@ -31,7 +31,7 @@ void setup() {
   BLE.scanForUuid("fff0");
 
   // Valve initialization
-  for(uint8_t i = 0; i < 4; i++){
+  for(uint8_t i = 1; i < 5; i++){
     pinMode(solenoid_pin[i], OUTPUT);
     digitalWrite(solenoid_pin[i], LOW);
   }
@@ -65,15 +65,6 @@ void loop() {
   if (Serial.available() > 0) {
         char command = Serial.read(); // Read serial input
         if (command == '1') {
-            if(solenoid_state[0]){
-            digitalWrite(solenoid_pin[0], LOW);
-            solenoid_state[0] = 0;
-          }
-          else{
-            digitalWrite(solenoid_pin[0], HIGH);
-            solenoid_state[0] = 1;
-          }
-        } else if (command == '2') {
             if(solenoid_state[1]){
             digitalWrite(solenoid_pin[1], LOW);
             solenoid_state[1] = 0;
@@ -82,9 +73,8 @@ void loop() {
             digitalWrite(solenoid_pin[1], HIGH);
             solenoid_state[1] = 1;
           }
-        }
-        else if(command == '3'){
-          if(solenoid_state[2]){
+        } else if (command == '2') {
+            if(solenoid_state[2]){
             digitalWrite(solenoid_pin[2], LOW);
             solenoid_state[2] = 0;
           }
@@ -93,7 +83,7 @@ void loop() {
             solenoid_state[2] = 1;
           }
         }
-        else if(command == '4'){
+        else if(command == '3'){
           if(solenoid_state[3]){
             digitalWrite(solenoid_pin[3], LOW);
             solenoid_state[3] = 0;
@@ -101,6 +91,16 @@ void loop() {
           else{
             digitalWrite(solenoid_pin[3], HIGH);
             solenoid_state[3] = 1;
+          }
+        }
+        else if(command == '4'){
+          if(solenoid_state[4]){
+            digitalWrite(solenoid_pin[4], LOW);
+            solenoid_state[4] = 0;
+          }
+          else{
+            digitalWrite(solenoid_pin[4], HIGH);
+            solenoid_state[4] = 1;
           }
         }
     }
@@ -165,7 +165,7 @@ void parseServiceData(byte* advData, int advDataLen){
 }
 
 void sendData() {
-  for(uint8_t i = 0; i < 4; i++){
+  for(uint8_t i = 1; i < 5; i++){
     String data_to_send = (String) kitData[i].boardNum + "," + (String) kitData[i].soil + "," + (String) kitData[i].humi + "," + (String) kitData[i].temp + "," + (String) kitData[i].co2;
     Serial.println(data_to_send);
     Serial1.println(data_to_send);
@@ -173,7 +173,7 @@ void sendData() {
 }
 
 void controlSolenoids(){
-    for(uint8_t i = 0; i < 4; i++) {
+    for(uint8_t i = 1; i < 5; i++) {
         if(kitData[i].soil < 20 && data_updated[i] == true) {
             if(solenoid_state[i] == 0) {
                 solenoid_state[i] = 1;
